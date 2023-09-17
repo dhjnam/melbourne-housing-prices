@@ -1,0 +1,5 @@
+.DS_Store
+sketch*
+**/__pycache__/
+data/
+melbourne/zip/
