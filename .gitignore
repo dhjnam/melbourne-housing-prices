@@ -1,5 +1,8 @@
 .DS_Store
 sketch*
+/data/**
 **/__pycache__/
-data/
+**/data/2021_AUST_SHP_GDA2020/
+**/data/prepared/
 melbourne/zip/
+**/.ipynb_checkpoints/
