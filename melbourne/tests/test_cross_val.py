@@ -3,7 +3,7 @@ import os, sys
 import numpy as np
 import pandas as pd
 
-from util.cross_val import CrossVal
+from cross_val import CrossVal
 
 test_dir = os.getenv("TEST_DIR")
 
@@ -48,8 +48,9 @@ class TestCrossVal:
             for max_depth         in [  2,   3,   4,    5]
             for min_samples_leaf  in [400, 600, 800, 1000]
         ]
-    
 
+
+    # @pytest.mark.skip
     def test_grid_cross_val_score(self, mocker, cross_val, params):
         """
         Test ``CrossVal.grid_cross_val_score`` on a ``DecisionTreeRegressor``.

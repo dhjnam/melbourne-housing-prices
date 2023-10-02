@@ -137,7 +137,13 @@ class CrossVal:
         self.y = self.df[target].to_numpy()
 
 
-    def grid_cross_val_score(self, estimator, params: list[dict], cv=4, n_jobs=6) -> Report:
+    def grid_cross_val_score(
+        self, 
+        estimator, 
+        params: list[dict], 
+        cv=4, 
+        n_jobs=6
+    ) -> Report:
         """
         Cross validation for estimator with parameters from a parameter grid
 
