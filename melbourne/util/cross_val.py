@@ -80,6 +80,35 @@ class Report:
             return self.params[idx]
         raise NoOptimalParamsError(min_avg, max_dev, self.params)
 
+    def avgs_devs_to_string(
+        self, 
+        acc: int | None=None, 
+        acc_avg: int=2,
+        acc_dev: int=2
+    ):
+        from textwrap import dedent
+        if acc is not None:
+            acc_avg = acc_dev = acc
+        return dedent(f'''
+            averages:            {" ".join([ str(np.round(avg, acc_avg)) for avg in self.avgs])}
+            standard deviations: {" ".join([ str(np.round(dev, acc_dev)) for dev in self.devs])}
+        ''')
+
+    def optimal_params_to_string(self):
+        if len(self.optimal_params) == 0:
+            return ''
+        strings = []
+        for mux, row in self.optimal_params.iterrows():
+            idx, param = row.to_list()
+            min_avg, max_dev = mux[0], mux[1]
+            title = f'({min_avg}, {max_dev}) @ idx[{idx}]'
+            param_str = '\n    '.join([
+                f'{key} -> {value}'
+                for key, value in param.items()
+            ])
+            strings.append(title + '\n    ' + f'{param_str}')
+        return '\n'.join(strings)
+
     def plot_hist(self, level: str='figure' or 'axis'):
         """
         Plot histogram of average scores ``avgs``.
@@ -103,6 +132,7 @@ class Report:
             return sns.displot(x=self.avgs, y=self.devs)
         elif level == 'axis':
             return sns.histplot(x=self.avgs, y=self.devs)
+        
 
 class CrossVal:
     """
@@ -172,3 +202,65 @@ class CrossVal:
         
         report = Report(scores=scores, params=params)
         return report
+
+
+class TrainTest:
+    """
+    Generic class to perform training and subsequent testing on a DataFrame.
+    The user is responsible to suitably split training and testing data.
+
+    Parameters
+    ----------
+    train : pd.DataFrame
+        The ``DataFrame`` containing the training data
+    test : pd.DataFrame
+        The ``DataFrame`` containing the test data
+    features : list[str]
+        List of strings containing the training features
+    target: str
+        Prediction target
+    """
+
+    from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
+    
+    def __init__(
+        self,
+        train: pd.DataFrame, 
+        test: pd.DataFrame, 
+        features: list[str], 
+        target: str, 
+    ):
+        self.features = features
+        self.target = target
+        self.train_X = train.loc[:, features]
+        self.train_y = train.loc[:, target]
+        self.test_X = test.loc[:, features]
+        self.test_y = test.loc[:, target]
+
+    def train_test(
+        self, 
+        estimator, 
+        param, 
+        error=mean_squared_error, 
+        score=r2_score
+    ):
+        """
+        Train and test with an estimator
+
+        Parameters
+        ----------
+        estimator : 
+            The estimator to train and test with
+        param : dict
+            Parameters for estimator configuration
+        error : default=sklearn.metrics.mean_squared_error
+            Metric to measure error between true target values from the test 
+            set and predicted target values.
+        score : default=sklearn.metrics.r2_score
+            Metric to measure estimator performance on test set.
+        """
+        estimator.set_params(**param)
+        estimator.fit(X=self.train_X, y=self.train_y)
+        pred_y = estimator.predict(X=self.test_X)
+        self.error = error(self.test_y, pred_y)
+        self.score = score(self.test_y, pred_y)
